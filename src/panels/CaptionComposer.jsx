@@ -56,11 +56,15 @@ export const CaptionComposer = () => {
         setProgress(0);
     };
 
+    const handleCaptionsUpdate = (newCaptions) => {
+        setCaptions(newCaptions);
+    };
+
     return (
         <div className="caption-composer-container">
             <div className="composer-header">
                 <h1>AutoCaption Pro</h1>
-                <p className="subtitle">Composer-style automated captioning for Nepali, Hindi & English</p>
+                <p className="subtitle">Composer-style automated captioning for Nepali, Hindi & English using Gemma AI</p>
             </div>
 
             <div className="workflow-steps">
@@ -125,6 +129,7 @@ export const CaptionComposer = () => {
                         <CaptionGenerator 
                             captions={captions}
                             language={detectedLanguage}
+                            onCaptionsUpdate={handleCaptionsUpdate}
                         />
                     </div>
                 )}

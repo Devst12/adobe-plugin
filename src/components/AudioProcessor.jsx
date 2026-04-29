@@ -1,8 +1,41 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export const AudioProcessor = ({ audioTrack, isProcessing, onProcess, onClear }) => {
     const [selectedRange, setSelectedRange] = useState({ start: "00:00:00:00", end: "00:00:10:00" });
     const [fps, setFps] = useState(24);
+    const [serverStatus, setServerStatus] = useState("checking");
+
+    useEffect(() => {
+        // Check if local AI server is running
+        checkServer();
+    }, []);
+
+    const checkServer = async () => {
+        try {
+            const response = await fetch("http://localhost:8000/api/health", {
+                method: "GET",
+                mode: "cors"
+            });
+            if (response.ok) {
+                setServerStatus("online");
+            } else {
+                setServerStatus("offline");
+            }
+        } catch (e) {
+            setServerStatus("offline");
+        }
+    };
+
+    const extractAudioFromTimeline = async () => {
+        // In real implementation, would use UXP to get selected audio
+        // For demo: return mock audio file path
+        return {
+            path: "/tmp/timeline_audio.wav",
+            duration: "00:00:15:00",
+            format: "WAV 48kHz",
+            language: null
+        };
+    };
 
     const formatTimecode = (seconds) => {
         const h = Math.floor(seconds / 3600);
@@ -15,8 +48,34 @@ export const AudioProcessor = ({ audioTrack, isProcessing, onProcess, onClear })
     return (
         <div className="audio-controls">
             <h3>🎵 Audio Extraction</h3>
+            
+            <div style={{
+                padding: "8px 12px",
+                borderRadius: "6px",
+                marginBottom: "12px",
+                fontSize: "13px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px"
+            }}
+            className={serverStatus === "online" ? "online-badge" : "offline-badge"}>
+                <span style={{
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "50%",
+                    background: serverStatus === "online" ? "#2ecc71" : "#e74c3c",
+                    animation: serverStatus === "online" ? "pulse 2s infinite" : "none"
+                }}></span>
+                AI Server: <strong>{serverStatus === "online" ? "🟢 Online" : "🔴 Offline"}</strong>
+                {serverStatus === "offline" && (
+                    <span style={{ fontSize: "11px", opacity: 0.7 }}>
+                        (run: python local_ai_server.py)
+                    </span>
+                )}
+            </div>
+
             <p style={{ fontSize: "13px", opacity: 0.8, margin: "8px 0" }}>
-                Select timeline range for audio processing
+                Select timeline range for AI processing
             </p>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "12px" }}>
@@ -87,17 +146,16 @@ export const AudioProcessor = ({ audioTrack, isProcessing, onProcess, onClear })
                     <span style={{ fontSize: "11px", opacity: 0.8 }}>
                         Duration: {audioTrack.duration}<br/>
                         Format: {audioTrack.format}<br/>
-                        Language: {audioTrack.language || "Auto-detect"}
                     </span>
                 </div>
             )}
 
             <button
                 className={`btn-primary${
-                    isProcessing ? " processing" : ""
+                    isProcessing || serverStatus !== "online" ? " processing" : ""
                 }`}
                 onClick={onProcess}
-                disabled={isProcessing}
+                disabled={isProcessing || serverStatus !== "online"}
                 style={{ marginBottom: "8px" }}
             >
                 {isProcessing ? (
@@ -105,8 +163,10 @@ export const AudioProcessor = ({ audioTrack, isProcessing, onProcess, onClear })
                         <span className="spinner" style={{ marginRight: "8px" }}></span>
                         Processing Audio...
                     </>
+                ) : serverStatus !== "online" ? (
+                    "🔴 Start AI Server First"
                 ) : (
-                    "▶ Extract & Process Audio"
+                    "▶ Extract & Send to Local AI"
                 )}
             </button>
 
