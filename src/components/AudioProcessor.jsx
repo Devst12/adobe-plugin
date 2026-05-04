@@ -12,9 +12,8 @@ export const AudioProcessor = ({ audioTrack, isProcessing, onProcess, onClear })
 
     const checkServer = async () => {
         try {
-            const response = await fetch("http://localhost:8000/api/health", {
-                method: "GET",
-                mode: "cors"
+            const response = await fetch("http://localhost:1234/v1/models", {
+                method: "GET"
             });
             if (response.ok) {
                 setServerStatus("online");
